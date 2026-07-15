@@ -176,12 +176,60 @@ function escapeHtml(value) {
         .replace(/>/g, "&gt;");
 }
 
+const aliases = {
+    "ايفون": "iphone",
+    "آيفون": "iphone",
+    "ابل": "apple",
+    "آبل": "apple",
+    "سامسونج": "samsung",
+    "سامسنج": "samsung",
+    "شاومي": "xiaomi",
+    "شاومى": "xiaomi",
+    "ريدمي": "redmi",
+    "بلايستيشن": "playstation",
+    "بلاي ستيشن": "playstation",
+    "ايباد": "ipad",
+    "آيباد": "ipad",
+    "ايربودز": "airpods",
+    "هواوي": "huawei",
+    "هواوى": "huawei",
+    "اوبو": "oppo",
+    "أوبو": "oppo",
+    "فيفو": "vivo",
+    "ون بلس": "oneplus",
+    "وان بلس": "oneplus",
+    "ريلمي": "realme",
+    "ريلمى": "realme",
+    "نوكيا": "nokia",
+    "غوغل": "google",
+    "قوقل": "google",
+    "بكسل": "pixel",
+    "موتورولا": "motorola",
+    "سوني": "sony",
+    "سوني اكسبيريا": "sony xperia",
+    "تكنو": "tecno",
+    "انفينكس": "infinix",
+    "بغداد": "بغداد",
+    "البصرة": "البصرة"
+};
+
+function expandQuery(q) {
+    let expanded = q;
+    for (const [ar, en] of Object.entries(aliases)) {
+        if (q.includes(ar)) {
+            expanded = expanded + " " + en;
+        }
+    }
+    return expanded;
+}
+
 function draw() {
-    const q = document.getElementById("search").value.toLowerCase().trim();
+    const rawQ = document.getElementById("search").value.toLowerCase().trim();
+    const q = expandQuery(rawQ);
     const tb = document.getElementById("tb");
 
-    const rows = q === "" ? cache : cache.filter(r => {
-    const fields = [
+    const rows = rawQ === "" ? cache : cache.filter(r => {
+        const fields = [
             r.product_name,
             r.brand,
             r.storage_size,
@@ -189,7 +237,8 @@ function draw() {
             r.suppliers?.location_details,
             r.suppliers?.supplier_name
         ];
-        return fields.some(f => (f || "").toString().toLowerCase().includes(q));
+        const text = fields.map(f => (f || "").toString().toLowerCase()).join(" ");
+        return q.split(" ").some(part => part && text.includes(part));
     });
 
     if (rows.length === 0) {
