@@ -40,7 +40,9 @@ const db=createClient(
 );
 
 async function loadProducts(){
-const {data,error}=await db.from("Products").select("*").order("product_name");
+const {data,error}=await db.from("products").select("*").order("product_name");
+  console.log(data);
+  console.log(error);
 if(error){console.error(error);return;}
 render(data);
 }
@@ -62,7 +64,7 @@ document.getElementById("products").innerHTML=rows;
 
 let cache=[];
 async function refresh(){
-const {data}=await db.from("Products").select("*").order("product_name");
+const {data}=await db.from("products").select("*").order("product_name");
 if(data){cache=data;render(cache);}
 }
 document.getElementById("search").addEventListener("input",()=>render(cache));
