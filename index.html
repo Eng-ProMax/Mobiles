@@ -1,24 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Iraq Tech Market</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>أسعار الهواتف الآن</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body{font-family:Arial;background:#f4f6f9;margin:0;padding:20px}
+body{font-family:Arial;background:#f5f7fb;margin:0;padding:25px}
 h1{text-align:center}
+p{text-align:center;color:#666}
+input{width:100%;max-width:500px;padding:12px;margin:20px auto;display:block}
 table{width:100%;border-collapse:collapse;background:#fff}
-th,td{padding:12px;border:1px solid #ddd;text-align:left}
-th{background:#1f6feb;color:#fff}
-tr:nth-child(even){background:#f9f9f9}
-input{width:100%;max-width:400px;padding:10px;margin:15px 0}
+th{background:#1565c0;color:#fff;padding:12px}
+td{padding:10px;border:1px solid #ddd;text-align:center}
+tr:nth-child(even){background:#f8f8f8}
 </style>
 </head>
 <body>
+
 <h1>أسعار الهواتف الآن</h1>
-<p style="text-align:center">تتحدث تلقائياً  </p>
+<p>تتحدث تلقائياً من Supabase</p>
+
 <input id="search" placeholder="ابحث عن هاتف...">
+
 <table>
 <thead>
 <tr>
@@ -33,43 +37,44 @@ input{width:100%;max-width:400px;padding:10px;margin:15px 0}
 </table>
 
 <script>
-const {createClient}=supabase;
-const db=createClient(
+const { createClient } = supabase;
+
+const db = createClient(
 "https://wagxxledanjltesnjhjo.supabase.co",
 "sb_publishable_g6t26mPCnubitvypBM15Ew_O50GdfMv"
 );
 
-async function loadProducts(){
-const {data,error}=await db.from("products").select("*").order("product_name");
-  console.log(data);
-  console.log(error);
-if(error){console.error(error);return;}
-render(data);
-}
+let cache=[];
 
-function render(data){
+function render(list){
 const q=document.getElementById("search").value.toLowerCase();
-let rows="";
-data.filter(x=>x.product_name.toLowerCase().includes(q)).forEach(p=>{
-rows+=<tr>
+document.getElementById("products").innerHTML=list
+.filter(p=>p.product_name.toLowerCase().includes(q))
+.map(p=>
+<tr>
 <td>${p.product_name}</td>
-<td>${p.brand??""}</td>
-<td>${p.storage_size??""}</td>
+<td>${p.brand}</td>
+<td>${p.storage_size}</td>
 <td>${p.current_price_usd}</td>
 <td>${new Date(p.last_updated).toLocaleString()}</td>
-</tr>;
-});
-document.getElementById("products").innerHTML=rows;
+</tr>).join("");
 }
 
-let cache=[];
-async function refresh(){
-const {data}=await db.from("products").select("*").order("product_name");
-if(data){cache=data;render(cache);}
+async function loadProducts(){
+const {data,error}=await db.from("products").select("*").order("product_id");
+console.log(data,error);
+if(error){
+alert("Supabase Error: "+error.message);
+return;
 }
+cache=data;
+render(cache);
+}
+
 document.getElementById("search").addEventListener("input",()=>render(cache));
-refresh();
-setInterval(refresh,30000);
+loadProducts();
+setInterval(loadProducts,30000);
 </script>
+
 </body>
 </html>
