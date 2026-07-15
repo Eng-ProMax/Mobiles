@@ -28,7 +28,7 @@
             const productsContainer = document.getElementById('products-list');
             try {
                 // الاتصال عبر الـ REST API المباشر والصحيح لـ Supabase لضمان عبور الأمان
-                const response = await fetch(${SUPABASE_URL}/rest/v1/Products?select=product_name,brand,storage_size,current_price_usd,Suppliers(supplier_name,location_details), {
+                const response = await fetch(${SUPABASE_URL}/rest/v1/products?select=product_name,brand,storage_size,current_price_usd,suppliers(supplier_name,location_details), {
                     method: 'GET',
                     headers: {
                         "apikey": SUPABASE_KEY,
