@@ -180,31 +180,41 @@ function draw() {
     const q = document.getElementById("search").value.toLowerCase().trim();
     const tb = document.getElementById("tb");
 
-    const rows = cache.filter(r => (r.product_name || "").toLowerCase().includes(q));
+    const rows = q === "" ? cache : cache.filter(r => {
+    const fields = [
+            r.product_name,
+            r.brand,
+            r.storage_size,
+            r.suppliers?.city,
+            r.suppliers?.location_details,
+            r.suppliers?.supplier_name
+        ];
+        return fields.some(f => (f || "").toString().toLowerCase().includes(q));
+    });
 
     if (rows.length === 0) {
-        tb.innerHTML = `<tr class="empty-row"><td colspan="8">لا توجد نتائج مطابقة</td></tr>`;
+        tb.innerHTML = <tr class="empty-row"><td colspan="8">لا توجد نتائج مطابقة</td></tr>;
         return;
     }
 
-    tb.innerHTML = rows.map(r => `
+    tb.innerHTML = rows.map(r => 
         <tr>
             <td>${escapeHtml(r.product_name)}</td>
             <td>${escapeHtml(r.brand)}</td>
             <td>${escapeHtml(r.storage_size)}</td>
-            <td class="price">$${escapeHtml(r.current_price)}</td>
+            <td class="price">$${escapeHtml(r.current_price_usd)}</td>
             <td>${escapeHtml(r.suppliers?.city)}</td>
             <td>${escapeHtml(r.suppliers?.location_details)}</td>
             <td>${escapeHtml(r.suppliers?.phone_number)}</td>
             <td>${r.last_updated ? new Date(r.last_updated).toLocaleString("ar-EG") : ""}</td>
         </tr>
-    `).join("");
+    ).join("");
 }
 
 async function load() {
     const { data, error } = await db
         .from("products")
-        .select(`
+        .select(
             *,
             suppliers(
                 supplier_name,
@@ -212,7 +222,7 @@ async function load() {
                 location_details,
                 phone_number
             )
-        `)
+        )
         .order("product_id");
 
     if (error) {
@@ -228,7 +238,14 @@ async function load() {
 document.getElementById("search").addEventListener("input", draw);
 
 load();
-setInterval(load, 30000);
+setInterval(load, 15000);
+
+db.channel('products-changes')
+    .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        () => load()
+    )
+    .subscribe();
 
 </script>
 
