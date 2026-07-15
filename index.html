@@ -242,11 +242,11 @@ function draw() {
     });
 
     if (rows.length === 0) {
-        tb.innerHTML = <tr class="empty-row"><td colspan="8">لا توجد نتائج مطابقة</td></tr>;
+        tb.innerHTML = `<tr class="empty-row"><td colspan="8">لا توجد نتائج مطابقة</td></tr>`;
         return;
     }
 
-    tb.innerHTML = rows.map(r => 
+    tb.innerHTML = rows.map(r => `
         <tr>
             <td>${escapeHtml(r.product_name)}</td>
             <td>${escapeHtml(r.brand)}</td>
@@ -257,13 +257,13 @@ function draw() {
             <td>${escapeHtml(r.suppliers?.phone_number)}</td>
             <td>${r.last_updated ? new Date(r.last_updated).toLocaleString("ar-EG") : ""}</td>
         </tr>
-    ).join("");
+    `).join("");
 }
 
 async function load() {
     const { data, error } = await db
         .from("products")
-        .select(
+        .select(`
             *,
             suppliers(
                 supplier_name,
@@ -271,7 +271,7 @@ async function load() {
                 location_details,
                 phone_number
             )
-        )
+        `)
         .order("product_id");
 
     if (error) {
