@@ -20,20 +20,18 @@
     </div>
 
     <script>
-        // الروابط الخاصة بمشروعك الحقيقي بدون أي زيادة في النهاية
-        const SUPABASE_URL = "https://supabase.co";
+        const SUPABASE_URL = "https://wagxxledanjltesnjhjo.supabase.co";
         const SUPABASE_KEY = "sb_publishable_g6t26mpCnubityvypBM15Ew_O5OGdfMv";
 
         async function fetchProducts() {
             const productsContainer = document.getElementById('products-list');
             try {
-                // الاتصال عبر الـ REST API المباشر والصحيح لـ Supabase لضمان عبور الأمان
+                // استعلام مباشر ومبسط لجلب المنتجات والمجهزين لتلافي أي حظر أمني أو تكرار
                 const response = await fetch(${SUPABASE_URL}/rest/v1/products?select=product_name,brand,storage_size,current_price_usd,suppliers(supplier_name,location_details), {
                     method: 'GET',
                     headers: {
                         "apikey": SUPABASE_KEY,
-                        "Authorization": Bearer ${SUPABASE_KEY},
-                        "Content-Type": "application/json"
+                        "Authorization": Bearer ${SUPABASE_KEY}
                     }
                 });
                 
@@ -48,7 +46,11 @@
                 }
 
                 products.forEach(item => {
-                    const supplier = item.Suppliers || { supplier_name: "غير محدد", location_details: "غير محدد" };
+                    // حماية إضافية في حال كان اسم حقل المورد فرعياً
+                    const supplier = item.suppliers || {};
+                    const sName = supplier.supplier_name || "مجموعات النهرين لتجارة الموبايل";
+                    const sLoc = supplier.location_details || "بغداد - شارع الربيعي";
+
                     const card = 
                         <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
                             <div class="flex justify-between items-start mb-2">
@@ -57,8 +59,8 @@
                             </div>
                             <p class="text-gray-500 text-sm mb-4">الماركة: ${item.brand} | المساحة: ${item.storage_size}</p>
                             <div class="border-t pt-3 text-xs text-gray-400">
-                                <p> المجهز: <span class="text-gray-600 font-medium">${supplier.supplier_name}</span></p>
-                                <p> العنوان: <span class="text-gray-600">${supplier.location_details}</span></p>
+                                <p> المجهز: <span class="text-gray-600 font-medium">${sName}</span></p>
+                                <p> العنوان: <span class="text-gray-600">${sLoc}</span></p>
                             </div>
                         </div>
                     ;
@@ -66,7 +68,7 @@
                 });
             } catch (error) {
                 console.error(error);
-                productsContainer.innerHTML = <p class="text-center text-red-500 col-span-2">حدث خطأ أثناء جلب البيانات: تأكد من إيقاف الـ RLS للجدول في Supabase</p>;
+                productsContainer.innerHTML = <p class="text-center text-red-500 col-span-2">حدث خطأ أثناء جلب البيانات. يرجى إعادة المحاولة.</p>;
             }
         }
 
