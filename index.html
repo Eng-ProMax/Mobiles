@@ -2,77 +2,143 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>أسعار الهواتف</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-body{font-family:Arial;background:#f4f4f4;padding:20px}
-table{width:100%;border-collapse:collapse;background:#fff}
-th,td{border:1px solid #ddd;padding:10px;text-align:center}
-th{background:#1565c0;color:#fff}
-input{width:100%;max-width:400px;padding:10px;margin:15px 0}
+body{
+    font-family:Arial;
+    background:#f4f4f4;
+    padding:20px;
+}
+h2,p{
+    text-align:center;
+}
+input{
+    width:100%;
+    max-width:400px;
+    padding:10px;
+    margin:20px auto;
+    display:block;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
+    text-align:center;
+}
+th{
+    background:#1565c0;
+    color:white;
+}
+tr:nth-child(even){
+    background:#f8f8f8;
+}
 </style>
+
 </head>
 <body>
+
 <h2>أسعار الهواتف الآن</h2>
-<p>تتحدث تلقائياً</p>
-<input id="search" placeholder="ابحث...">
+<p>تتحدث تلقائياً من Supabase</p>
+
+<input id="search" placeholder="ابحث عن هاتف...">
+
 <table>
+
 <thead>
 <tr>
-<th>الهاتف</th><th>الشركة</th><th>السعة</th><th>السعر</th><th>المحافظة</th><th>المنطقة</th><th>الهاتف</th><th>آخر تحديث</th>
+<th>الهاتف</th>
+<th>الشركة</th>
+<th>السعة</th>
+<th>السعر</th>
+<th>المحافظة</th>
+<th>المنطقة</th>
+<th>رقم الهاتف</th>
+<th>آخر تحديث</th>
 </tr>
 </thead>
+
 <tbody id="tb"></tbody>
+
 </table>
 
 <script>
+
 const { createClient } = supabase;
+
 const db = createClient(
 "https://wagxxledanjltesnjhjo.supabase.co",
 "sb_publishable_g6t26mPCnubitvypBM15Ew_O50GdfMv"
 );
 
-let cache=[];
+let cache = [];
 
 function draw(){
- const q=document.getElementById("search").value.toLowerCase();
- document.getElementById("tb").innerHTML=cache
- .filter(r=>(r.product_name||"").toLowerCase().includes(q))
- .map(r=>
-<tr>
-<td>${r.product_name}</td>
-<td>${r.brand}</td>
-<td>${r.storage_size}</td>
-<td>$${r.current_price_usd}</td>
-<td>${r.suppliers?.city || ""}</td>
-<td>${r.suppliers?.location_details || ""}</td>
-<td>${r.suppliers?.phone_number || ""}</td>
-<td>${new Date(r.last_updated).toLocaleString()}</td>
-</tr>
- ).join("");
+
+    const q = document.getElementById("search").value.toLowerCase();
+
+    document.getElementById("tb").innerHTML =
+    cache
+    .filter(r => (r.product_name || "").toLowerCase().includes(q))
+    .map(r => 
+        <tr>
+            <td>${r.product_name}</td>
+            <td>${r.brand}</td>
+            <td>${r.storage_size}</td>
+            <td>$${r.current_price}</td>
+            <td>${r.suppliers?.city || ""}</td>
+            <td>${r.suppliers?.location_details || ""}</td>
+            <td>${r.suppliers?.phone_number || ""}</td>
+            <td>${new Date(r.last_updated).toLocaleString()}</td>
+        </tr>
+    )
+    .join("");
+
 }
 
 async function load(){
- const {data,error}=await db
- .from("products")
- .select("*,suppliers(supplier_name,city,location_details,phone_number)")
- .order("product_id");
 
- console.log(data,error);
+const { data, error } = await db
+.from("products")
+.select(
+*,
+suppliers(
+supplier_name,
+city,
+location_details,
+phone_number
+)
+)
+.order("product_id");
 
- if(error){
-   alert(error.message);
-   return;
- }
+console.log(data);
+console.log(error);
 
- cache=data||[];
- draw();
+if(error){
+    alert(error.message);
+    return;
 }
 
-document.getElementById("search").oninput=draw;
+cache = data || [];
+
+draw();
+
+}
+
+document.getElementById("search").addEventListener("input", draw);
+
 load();
+
 setInterval(load,30000);
+
 </script>
+
 </body>
 </html>
