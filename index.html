@@ -2,55 +2,72 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Iraq Tech Market</title>
-</head>
-
-<body>
-
-<div id="products"></div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{font-family:Arial;background:#f4f6f9;margin:0;padding:20px}
+h1{text-align:center}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{padding:12px;border:1px solid #ddd;text-align:left}
+th{background:#1f6feb;color:#fff}
+tr:nth-child(even){background:#f9f9f9}
+input{width:100%;max-width:400px;padding:10px;margin:15px 0}
+</style>
+</head>
+<body>
+<h1>أسعار الهواتف الآن</h1>
+<p style="text-align:center">تتحدث تلقائياً  </p>
+<input id="search" placeholder="ابحث عن هاتف...">
+<table>
+<thead>
+<tr>
+<th>الهاتف</th>
+<th>الشركة</th>
+<th>السعة</th>
+<th>السعر ($)</th>
+<th>آخر تحديث</th>
+</tr>
+</thead>
+<tbody id="products"></tbody>
+</table>
 
 <script>
-const { createClient } = supabase;
+const {createClient}=supabase;
+const db=createClient(
+"https://wagxxledanjltesnjhjo.supabase.co",
+"sb_publishable_g6t26mPCnubitvypBM15Ew_O50GdfMv"
+);
 
-const supabaseUrl = "https://wagxxledanjltesnjhjo.supabase.co";
-const supabaseKey = "sb_publishable_g6t26mPCnubitvypBM15Ew_O50GdfMv";
-
-const db = createClient(supabaseUrl, supabaseKey);
-
-async function loadProducts() {
-
-    const { data, error } = await db
-        .from("Products")
-        .select("*");
-
-    if (error) {
-        console.log(error);
-        return;
-    }
-
-    let html = "";
-
-    data.forEach(product => {
-
-        html += 
-        <div style="border:1px solid #ddd;padding:15px;margin:10px;border-radius:10px">
-            <h2>${product.product_name}</h2>
-            <p>Brand: ${product.brand}</p>
-            <p>Storage: ${product.storage_size}</p>
-            <h3>$${product.current_price_usd}</h3>
-        </div>
-        ;
-
-    });
-
-    document.getElementById("products").innerHTML = html;
-
+async function loadProducts(){
+const {data,error}=await db.from("Products").select("*").order("product_name");
+if(error){console.error(error);return;}
+render(data);
 }
 
-loadProducts();
-</script>
+function render(data){
+const q=document.getElementById("search").value.toLowerCase();
+let rows="";
+data.filter(x=>x.product_name.toLowerCase().includes(q)).forEach(p=>{
+rows+=<tr>
+<td>${p.product_name}</td>
+<td>${p.brand??""}</td>
+<td>${p.storage_size??""}</td>
+<td>${p.current_price_usd}</td>
+<td>${new Date(p.last_updated).toLocaleString()}</td>
+</tr>;
+});
+document.getElementById("products").innerHTML=rows;
+}
 
+let cache=[];
+async function refresh(){
+const {data}=await db.from("Products").select("*").order("product_name");
+if(data){cache=data;render(cache);}
+}
+document.getElementById("search").addEventListener("input",()=>render(cache));
+refresh();
+setInterval(refresh,30000);
+</script>
 </body>
 </html>
