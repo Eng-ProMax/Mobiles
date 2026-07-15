@@ -8,135 +8,227 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{
-    font-family:Arial;
-    background:#f4f4f4;
-    padding:20px;
-}
-h2,p{
-    text-align:center;
-}
-input{
-    width:100%;
-    max-width:400px;
-    padding:10px;
-    margin:20px auto;
-    display:block;
-}
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-}
-th,td{
-    border:1px solid #ddd;
-    padding:10px;
-    text-align:center;
-}
-th{
-    background:#1565c0;
-    color:white;
-}
-tr:nth-child(even){
-    background:#f8f8f8;
-}
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+        background: #eef1f5;
+        padding: 30px 16px;
+        margin: 0;
+        color: #1f2937;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    h2 {
+        text-align: center;
+        color: #0d3b66;
+        font-size: 28px;
+        margin-bottom: 4px;
+    }
+
+    p.subtitle {
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+        margin-top: 0;
+        margin-bottom: 24px;
+    }
+
+    .search-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 24px;
+    }
+
+    #search {
+        width: 100%;
+        max-width: 420px;
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 15px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        background: #fff;
+    }
+
+    #search:focus {
+        border-color: #1565c0;
+        box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        background: #fff;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 720px;
+    }
+
+    thead th {
+        background: #0d3b66;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 14px 10px;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    tbody td {
+        padding: 12px 10px;
+        text-align: center;
+        font-size: 14px;
+        border-bottom: 1px solid #e5e7eb;
+        color: #374151;
+    }
+
+    tbody tr:nth-child(even) {
+        background: #f9fafb;
+    }
+
+    tbody tr:hover {
+        background: #eaf2fb;
+        transition: background 0.15s;
+    }
+
+    .price {
+        color: #0d7a3c;
+        font-weight: 700;
+    }
+
+    .empty-row td {
+        padding: 30px;
+        color: #9ca3af;
+        font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+        h2 {
+            font-size: 22px;
+        }
+        thead th, tbody td {
+            font-size: 12px;
+            padding: 8px 6px;
+        }
+    }
 </style>
 
 </head>
 <body>
 
-<h2>أسعار الهواتف الآن</h2>
-<p>تتحدث تلقائياً من Supabase</p>
+<div class="container">
 
-<input id="search" placeholder="ابحث عن هاتف...">
+    <h2>أسعار الهواتف الآن</h2>
+    <p class="subtitle">تُحدَّث تلقائياً من قاعدة البيانات</p>
 
-<table>
+    <div class="search-wrap">
+        <input id="search" placeholder="ابحث عن هاتف...">
+    </div>
 
-<thead>
-<tr>
-<th>الهاتف</th>
-<th>الشركة</th>
-<th>السعة</th>
-<th>السعر</th>
-<th>المحافظة</th>
-<th>المنطقة</th>
-<th>رقم الهاتف</th>
-<th>آخر تحديث</th>
-</tr>
-</thead>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>الهاتف</th>
+                    <th>الشركة</th>
+                    <th>السعة</th>
+                    <th>السعر</th>
+                    <th>المحافظة</th>
+                    <th>المنطقة</th>
+                    <th>رقم الهاتف</th>
+                    <th>آخر تحديث</th>
+                </tr>
+            </thead>
+            <tbody id="tb"></tbody>
+        </table>
+    </div>
 
-<tbody id="tb"></tbody>
-
-</table>
+</div>
 
 <script>
 
 const { createClient } = supabase;
 
 const db = createClient(
-"https://wagxxledanjltesnjhjo.supabase.co",
-"sb_publishable_g6t26mPCnubitvypBM15Ew_O50GdfMv"
+    "https://wagxxledanjltesnjhjo.supabase.co",
+    "sb_publishable_g6t26mPCnubitvypBM15Ew_O50GdfMv"
 );
 
 let cache = [];
 
-function draw(){
+function escapeHtml(value) {
+    if (value === null || value === undefined) return "";
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
 
-    const q = document.getElementById("search").value.toLowerCase();
+function draw() {
+    const q = document.getElementById("search").value.toLowerCase().trim();
+    const tb = document.getElementById("tb");
 
-    document.getElementById("tb").innerHTML =
-    cache
-    .filter(r => (r.product_name || "").toLowerCase().includes(q))
-    .map(r => 
+    const rows = cache.filter(r => (r.product_name || "").toLowerCase().includes(q));
+
+    if (rows.length === 0) {
+        tb.innerHTML = `<tr class="empty-row"><td colspan="8">لا توجد نتائج مطابقة</td></tr>`;
+        return;
+    }
+
+    tb.innerHTML = rows.map(r => `
         <tr>
-            <td>${r.product_name}</td>
-            <td>${r.brand}</td>
-            <td>${r.storage_size}</td>
-            <td>$${r.current_price}</td>
-            <td>${r.suppliers?.city || ""}</td>
-            <td>${r.suppliers?.location_details || ""}</td>
-            <td>${r.suppliers?.phone_number || ""}</td>
-            <td>${new Date(r.last_updated).toLocaleString()}</td>
+            <td>${escapeHtml(r.product_name)}</td>
+            <td>${escapeHtml(r.brand)}</td>
+            <td>${escapeHtml(r.storage_size)}</td>
+            <td class="price">$${escapeHtml(r.current_price)}</td>
+            <td>${escapeHtml(r.suppliers?.city)}</td>
+            <td>${escapeHtml(r.suppliers?.location_details)}</td>
+            <td>${escapeHtml(r.suppliers?.phone_number)}</td>
+            <td>${r.last_updated ? new Date(r.last_updated).toLocaleString("ar-EG") : ""}</td>
         </tr>
-    )
-    .join("");
-
+    `).join("");
 }
 
-async function load(){
+async function load() {
+    const { data, error } = await db
+        .from("products")
+        .select(`
+            *,
+            suppliers(
+                supplier_name,
+                city,
+                location_details,
+                phone_number
+            )
+        `)
+        .order("product_id");
 
-const { data, error } = await db
-.from("products")
-.select(
-*,
-suppliers(
-supplier_name,
-city,
-location_details,
-phone_number
-)
-)
-.order("product_id");
+    if (error) {
+        console.error(error);
+        alert(error.message);
+        return;
+    }
 
-console.log(data);
-console.log(error);
-
-if(error){
-    alert(error.message);
-    return;
-}
-
-cache = data || [];
-
-draw();
-
+    cache = data || [];
+    draw();
 }
 
 document.getElementById("search").addEventListener("input", draw);
 
 load();
-
-setInterval(load,30000);
+setInterval(load, 30000);
 
 </script>
 
