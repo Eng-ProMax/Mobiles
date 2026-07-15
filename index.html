@@ -1,80 +1,26 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>أسعار الهواتف الآن</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-body{font-family:Arial;background:#f5f7fb;margin:0;padding:25px}
-h1{text-align:center}
-p{text-align:center;color:#666}
-input{width:100%;max-width:500px;padding:12px;margin:20px auto;display:block}
-table{width:100%;border-collapse:collapse;background:#fff}
-th{background:#1565c0;color:#fff;padding:12px}
-td{padding:10px;border:1px solid #ddd;text-align:center}
-tr:nth-child(even){background:#f8f8f8}
-</style>
-</head>
-<body>
-
-<h1>أسعار الهواتف الآن</h1>
-<p>تتحدث تلقائياً من Supabase</p>
-
-<input id="search" placeholder="ابحث عن هاتف...">
-
-<table>
-<thead>
-<tr>
-<th>الهاتف</th>
-<th>الشركة</th>
-<th>السعة</th>
-<th>السعر ($)</th>
-<th>آخر تحديث</th>
-</tr>
-</thead>
-<tbody id="products"></tbody>
-</table>
-
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>أسعار الهواتف</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
+body{font-family:Arial;background:#f4f4f4;padding:20px}table{width:100%;border-collapse:collapse;background:#fff}
+th,td{border:1px solid #ddd;padding:10px;text-align:center}th{background:#1565c0;color:#fff}
+input{width:100%;max-width:400px;padding:10px;margin:15px 0}
+</style></head><body>
+<h2>أسعار الهواتف الآن</h2><input id="search" placeholder="ابحث...">
+<table><thead><tr><th>الهاتف</th><th>الشركة</th><th>السعة</th><th>السعر</th><th>المحافظة</th><th>المنطقة</th><th>الهاتف</th><th>آخر تحديث</th></tr></thead><tbody id="tb"></tbody></table>
 <script>
-const { createClient } = supabase;
-
-const db = createClient(
-"https://wagxxledanjltesnjhjo.supabase.co",
-"sb_publishable_g6t26mPCnubitvypBM15Ew_O50GdfMv"
-);
-
+const {createClient}=supabase;
+const db=createClient("https://wagxxledanjltesnjhjo.supabase.co","sb_publishable_g6t26mPCnubitvypBM15Ew_O50GdfMv");
 let cache=[];
-
-function render(list){
-const q=document.getElementById("search").value.toLowerCase();
-document.getElementById("products").innerHTML=list
-.filter(p=>p.product_name.toLowerCase().includes(q))
-.map(p=>
-<tr>
-<td>${p.product_name}</td>
-<td>${p.brand}</td>
-<td>${p.storage_size}</td>
-<td>${p.current_price_usd}</td>
-<td>${new Date(p.last_updated).toLocaleString()}</td>
-</tr>).join("");
+function draw(){
+ let q=document.getElementById('search').value.toLowerCase();
+ document.getElementById('tb').innerHTML=cache.filter(r=>r.product_name.toLowerCase().includes(q)).map(r=><tr>
+<td>${r.product_name}</td><td>${r.brand}</td><td>${r.storage_size}</td><td>$${r.current_price_usd}</td>
+<td>${r.suppliers?.city||''}</td><td>${r.suppliers?.location_details||''}</td><td>${r.suppliers?.phone_number||''}</td>
+<td>${new Date(r.last_updated).toLocaleString()}</td></tr>).join('');
 }
-
-async function loadProducts(){
-const {data,error}=await db.from("products").select("*").order("product_id");
-console.log(data,error);
-if(error){
-alert("Supabase Error: "+error.message);
-return;
+async function load(){
+const {data,error}=await db.from("products").select("*,suppliers(supplier_name,city,location_details,phone_number)").order("product_id");
+if(error){alert(error.message);console.log(error);return;}
+cache=data;draw();
 }
-cache=data;
-render(cache);
-}
-
-document.getElementById("search").addEventListener("input",()=>render(cache));
-loadProducts();
-setInterval(loadProducts,30000);
-</script>
-
-</body>
-</html>
+document.getElementById("search").oninput=draw;
+load();setInterval(load,30000);
+</script></body></html>
